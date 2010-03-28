@@ -1,0 +1,24 @@
+<service name="someService" url="http://someservice.com/service" ns="com.someservice">
+ <types>
+  <type name="customType">
+   <member type="i4">intMember</member>
+   <member type="customType">customTypeMember</member>
+   <member type="otherCustomType">otherCustomTypeMember</member>
+  </type>
+  <type name="otherCustomType">
+   <member type="string">stringMember</member>
+  </type>
+ </types>
+ <methods>
+  <method name="example.method" result="customType">
+   <param type="string">argName1</param>
+   <param type="int">argName2</param>
+   <param type="base64">argName3</param>
+   <param type="i4">argName4</param>
+   <param type="boolean">argName5</param>
+   <param type="struct">argName6</param>
+   <param type="array">argName7</param>
+   <param type="customType">argName6</param>
+  </method>
+ </methods>
+</service>
