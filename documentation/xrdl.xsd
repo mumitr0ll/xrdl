@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="service">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="types">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="type" minOccurs="0" maxOccurs="unbounded">	
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="member" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType mixed="true">
+												<xs:attribute name="type" type="xs:string" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute name="name" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element><!-- types -->
+				<xs:element name="methods">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="method" minOccurs="0" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="param" minOccurs="0" maxOccurs="unbounded">
+											<xs:complexType mixed="true">
+												<xs:attribute name="type" type="xs:string" use="required" />
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+									<xs:attribute name="result" type="xs:string" />
+									<xs:attribute name="name" type="xs:string" />
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="url" type="xs:string" />
+			<xs:attribute name="ns" type="xs:string" />
+			<xs:attribute name="name" type="xs:string" />
+		</xs:complexType>
+	</xs:element><!-- service -->
+</xs:schema>
