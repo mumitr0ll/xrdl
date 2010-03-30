@@ -69,18 +69,31 @@ class XRDLGenerator {
 		$exportedTypes = array_unique($exportedTypes);
 		// All exported types are in $exportedTypes
 		// Iterate over types
+		$typesXmlCacheMap = array();
 		foreach ($exportedTypes as $exportedType) {
 			if (!$this->isNativeXmlRpcType($exportedType)) {
-				$xmlBuffer .= $this->generateXRDLForType($exportedType);
+				if (!isset($typesXmlCacheMap[$exportedType])) { // Avoid duplicate types in XML
+					$typesXmlCacheMap[$exportedType] = $this->generateXRDLForType($exportedType, $typesXmlCacheMap);
+				}
 			}
+		}
+		foreach ($typesXmlCacheMap as $type => $typeXml) {
+			$xmlBuffer .= $typeXml;
 		}
 
 		$typesXml = sprintf($typesXml, $xmlBuffer);
 		$serviceXml = sprintf($serviceXml, $typesXml, $methodsXml);
-		print $serviceXml;
+
+		$document = new DomDocument("1.0", "utf-8");
+		if ($document->loadXML($serviceXml)) {
+			return $document->saveXML();
+		} else {
+			print "Generated XML does not appear to be well formed. This should never happen.\n";
+			return false;
+		}
 	}
 
-	private function generateXRDLForType($type) {
+	private function generateXRDLForType($type, &$cachedTypesXmlMap) {
 		$result = "<type name=\"$type\">\n";
 		if (!class_exists($type)) {
 			print "Unable to generate XRDL definition for unknown type $type";
@@ -96,6 +109,12 @@ class XRDLGenerator {
 				}
 				$type = $this->parseMemberDocComment($comment);
 				if ($type!==FALSE) {
+					// We need to recursively generate XML for types referenced
+					if (!$this->isNativeXmlRpcType($type)) {
+						if (!isset($cachedTypesXmlMap[$type])) {
+							$cachedTypesXmlMap[$type] = $this->generateXRDLForType($type, $cachedTypesXmlMap);
+						}
+					}
 					$result .= "<member type=\"$type\">$name</member>\n";
 				} else {
 					print "No @type tag in documentation associated with member $name in type $type. Skipping member.\n";
@@ -112,7 +131,7 @@ class XRDLGenerator {
 	private function isNativeXmlRpcType($type) {
 		return in_array(
 			$type, 
-			array("i4", "string", "base64", "bool", "struct", "array", "float"));
+			array("i4", "string", "base64", "boolean", "struct", "array", "double", "dateTime.iso8601", "int"));
 	}
 
 	private function parseMemberDocComment($comment) {
