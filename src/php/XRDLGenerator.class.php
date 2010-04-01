@@ -55,13 +55,17 @@ class XRDLGenerator {
 		$serviceXml = "<service name=\"$this->name\" ns=\"$this->ns\" url=\"$this->url\">\n%s\n%s</service>\n";
 		foreach ($this->entries as $class => $methods) {
 			foreach ($methods as $method) {
-				$rm = new ReflectionMethod($class, $method);
-				$methodComment = $rm->getDocComment();
-				$xmlRpcMethod = $this->parseDocComment($methodComment);
-				$xmlRpcMethod->name = $method;
-				$exportedTypes = array_merge($exportedTypes, $xmlRpcMethod->paramTypes);
-				$exportedTypes[] = $xmlRpcMethod->returnType;
-				$xmlBuffer .= $xmlRpcMethod->generateXRDL();
+				try {
+					$rm = new ReflectionMethod($class, $method);
+					$methodComment = $rm->getDocComment();
+					$xmlRpcMethod = $this->parseDocComment($methodComment);
+					$xmlRpcMethod->name = $method;
+					$exportedTypes = array_merge($exportedTypes, $xmlRpcMethod->paramTypes);
+					$exportedTypes[] = $xmlRpcMethod->returnType;
+					$xmlBuffer .= $xmlRpcMethod->generateXRDL();
+				} catch (Exception $e) {
+					print "Failed to generate XRDL for $class::$method(): " . $e->getMessage() . "\n";
+				}
 			}
 		}
 		$methodsXml = sprintf($methodsXml, $xmlBuffer);

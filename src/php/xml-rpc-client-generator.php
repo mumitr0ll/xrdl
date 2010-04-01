@@ -1,11 +1,20 @@
 <?php
 
+require_once "Args.class.php";
+
+$a = new Args();
+$file = $a->flag("file");
+
+if ($file===FALSE) {
+	printHelp();
+}
+
 $document = new DomDocument();
-if (!is_readable("service.xml")) {
-	print "No such file\n";
+if (!is_readable($file)) {
+	print "$file can not be read.\n";
 	exit(1);
 }
-if ($document->load("./service.xml")===FALSE) {
+if ($document->load($file)===FALSE) {
 	print "Failed to load service definition\n";
 	exit(1);
 }
@@ -122,5 +131,9 @@ $clientCode = str_replace("%METHODS%", $methods, $clientCode);
 $clientCode = str_replace("%URL%", $serviceUrl, $clientCode);
 
 print $clientCode;
+
+function printHelp() {
+	die("Usage: php ./xml-rpc-client-generator.php --file <path to XRDL-file>\n");
+}
 
 ?>
