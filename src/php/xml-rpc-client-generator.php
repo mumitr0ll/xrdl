@@ -105,7 +105,7 @@ for ($i=0;$i<$methodNodes->length;$i++) {
 			}
 			$paramType = $paramNode->attributes->getNamedItem("type")->value;
 			$paramName = $paramNode->textContent;
-			$outputMethodDefinition .= $paramType . " \$" . $paramName;
+			$outputMethodDefinition .= "\$" . $paramName;
 			$paramCodeSnippet .= "\t\t\t\tnew xmlrpcval(\$$paramName, \"$paramType\"),\n";
 			$addedParamCount++;
 		} else {
