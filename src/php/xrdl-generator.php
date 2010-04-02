@@ -1,5 +1,7 @@
 <?php
 
+ini_set("include_path", ini_get("include_path") . ":../lib/");
+
 require_once "XRDLGenerator.class.php";
 require_once "Args.class.php";
 require_once "exports.php";

@@ -1,5 +1,7 @@
 <?php
 
+ini_set("include_path", ini_get("include_path") . ":../lib/");
+
 require_once "Args.class.php";
 
 $a = new Args();

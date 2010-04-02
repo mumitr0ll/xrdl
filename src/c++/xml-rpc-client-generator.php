@@ -4,13 +4,24 @@
  * - Use statically typed method results, instead of QVariant based ones
  */
 
+ini_set("include_path", ini_get("include_path") . ":../lib/");
+
+require_once "Args.class.php";
+
+$a = new Args();
+$file = $a->flag("file");
+
+if ($file===FALSE) {
+	printHelp();
+}
+
 $document = new DomDocument();
-if (!is_readable("../../examples/service.xml")) {
-	print "No such file\n";
+if (!is_readable($file)) {
+	print "$file can not be read\n";
 	exit(1);
 }
 
-if ($document->load("../../examples/service.xml")===FALSE) {
+if ($document->load($file)===FALSE) {
 	print "Failed to load service definition\n";
 	exit(1);
 }
@@ -130,6 +141,10 @@ function xmlRpcTypeToMaiaType($xmlRpcType) {
 		// All custom types are handled as a QVariantMap
 		return "QVariantMap";
 	}
+}
+
+function printHelp() {
+	die("Usage:  php ./xml-rpc-client-generator.php --file <path to XRDL file>\n");
 }
 
 ?>
