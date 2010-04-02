@@ -29,20 +29,21 @@ $serviceName = $serviceNode->attributes->getNamedItem("name")->value;
 $serviceUrl = $serviceNode->attributes->getNamedItem("url")->value;
 $serviceNS = str_replace(".", "\\", $serviceNode->attributes->getNamedItem("ns")->value);
 
-print "/*\n";
-print "Service name: " . $serviceName . "\n";
-print "Service URL: " . $serviceUrl . "\n";
-print "Service NS: " . $serviceNS . "\n";
-print "Found " . $typeNodes->length . " type definitions\n";
-print "Found " . $methodNodes->length . " method definitions\n";
-print "*/\n\n";
+//print "/*\n";
+//print "Service name: " . $serviceName . "\n";
+//print "Service URL: " . $serviceUrl . "\n";
+//print "Service NS: " . $serviceNS . "\n";
+//print "Found " . $typeNodes->length . " type definitions\n";
+//print "Found " . $methodNodes->length . " method definitions\n";
+//print "*/\n\n";
 
 $methods = "";
 $types = "";
 
 $clientCodeTemplate = <<<EOT
+<?php
 
-namespace %NAMESPACE%;
+//namespace %NAMESPACE%;
 
 // Remotely defined types
 %TYPES%
@@ -51,7 +52,7 @@ class %CLASSNAME% {
 	private \$client;
 	private \$url;
 
-	public __construct() {
+	public function __construct() {
 		\$this->url = "%URL%";
 		\$this->client = new xmlrpc_client("%URL%");
 	}
@@ -60,6 +61,7 @@ class %CLASSNAME% {
 	%METHODS%
 }
 
+?>
 EOT;
 
 for ($i=0;$i<$typeNodes->length;$i++) {
@@ -90,20 +92,24 @@ for ($i=0;$i<$methodNodes->length;$i++) {
 	$outputMethodDefinition .= $methodName . "(";
 	$paramNodes = $methodNode->childNodes;
 	$paramCodeSnippet = "";
+	$addedParamCount = 0;
 	for ($j=0;$j<$paramNodes->length;$j++) {
 		$paramNode = $paramNodes->item($j);
 		if ($paramNode->nodeName=="param") {
+			if ($addedParamCount>0) {
+				$outputMethodDefinition .= ", ";
+			}
 			$paramType = $paramNode->attributes->getNamedItem("type")->value;
 			$paramName = $paramNode->textContent;
-			$outputMethodDefinition .= $paramType . " " . $paramName;
-			$outputMethodDefinition .= ", ";
+			$outputMethodDefinition .= $paramType . " \$" . $paramName;
 			$paramCodeSnippet .= "\t\t\t\tnew xmlrpcval(\$$paramName, \"$paramType\"),\n";
+			$addedParamCount++;
 		} else {
 			continue;
 		}
 	}
 	$outputMethodDefinition .= <<<EOM
-	) {
+) {
                 \$msg = new xmlrpcmsg("setInfoObjectHeadline",
                         array(
 $paramCodeSnippet
@@ -126,9 +132,11 @@ EOM;
 	$methods .= $outputMethodDefinition;
 }
 
+$className = str_replace("-", "_", str_replace(" ", "_", $serviceName));
+
 $clientCode = str_replace("%TYPES%", $types, $clientCodeTemplate);
 $clientCode = str_replace("%NAMESPACE%", $serviceNS, $clientCode);
-$clientCode = str_replace("%CLASSNAME%", $serviceName . "_client", $clientCode);
+$clientCode = str_replace("%CLASSNAME%", $className . "_client", $clientCode);
 $clientCode = str_replace("%METHODS%", $methods, $clientCode);
 $clientCode = str_replace("%URL%", $serviceUrl, $clientCode);
 
