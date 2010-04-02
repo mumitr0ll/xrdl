@@ -22,7 +22,9 @@ foreach ($exports as $class => $methods) {
 		$generator->addMethod($class, $method);
 	}
 }
-$generator->generate();
+
+
+print $generator->generate();
 
 function printHelp() {
 	die("Usage: php ./xrdl-generator.php --url <service URL> --ns <service namespace> --name <service name>\n");
