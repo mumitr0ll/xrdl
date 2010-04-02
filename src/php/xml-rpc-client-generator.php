@@ -43,6 +43,10 @@ $types = "";
 $clientCodeTemplate = <<<EOT
 <?php
 
+require_once "xmlrpc.inc";
+require_once "xmlrpcs.inc";
+require_once "xmlrpc_wrappers.inc";
+
 //namespace %NAMESPACE%;
 
 // Remotely defined types
