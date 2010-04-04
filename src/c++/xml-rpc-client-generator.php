@@ -10,8 +10,18 @@ require_once "Args.class.php";
 
 $a = new Args();
 $file = $a->flag("file");
+$outputDir = $a->flag("dir");
+$prefix = $a->flag("prefix");
 
 if ($file===FALSE) {
+	printHelp();
+}
+
+if ($outputDir===FALSE) {
+	printHelp();
+}
+
+if ($prefix===FALSE) {
 	printHelp();
 }
 
@@ -34,29 +44,25 @@ $serviceName = $serviceNode->attributes->getNamedItem("name")->value;
 $serviceUrl = $serviceNode->attributes->getNamedItem("url")->value;
 $serviceNS = $serviceNode->attributes->getNamedItem("ns")->value;
 
-print "/*\n";
-print "Service name: " . $serviceName . "\n";
-print "Service URL: " . $serviceUrl . "\n";
-print "Service NS: " . $serviceNS . "\n";
-print "Found " . $typeNodes->length . " type definitions\n";
-print "Found " . $methodNodes->length . " method definitions\n";
-print "*/\n\n";
-
 $methods = "";
 $methodBodies = "";
 
 $clientHeaderCodeTemplate = <<<EOT
-#ifndef XMLRPCCLIENT_H
-#define XMLRPCCLIENT_H
+/* 
+ * Automatically generated header file.
+ * Any changes will be overridden
+ */
+#ifndef %UPPERCASE_PREFIX%XMLRPCCLIENT_H
+#define %UPPERCASE_PREFIX%XMLRPCCLIENT_H
 
-#define XML_RPC_URL %URL%
-#define XML_RPC_NS %NAMESPACE%
-#define XML_RPC_SERVICE_NAME %SERVICE_NAME%
+#define %UPPERCASE_PREFIX%_XML_RPC_URL %URL%
+#define %UPPERCASE_PREFIX%_XML_RPC_NS %NAMESPACE%
+#define %UPPERCASE_PREFIX%_XML_RPC_SERVICE_NAME %SERVICE_NAME%
 
 #include <QObject>
 #include "maiaXmlRpcClient.h"
 
-class XmlRpcClient : public QObject {
+class %PREFIX%XmlRpcClient : public QObject {
 	private:
 		MaiaXmlRpcClient rpcClient;
 	public:
@@ -68,7 +74,7 @@ class XmlRpcClient : public QObject {
 EOT;
 
 $clientBodyCodeTemplate = <<<EOT
-#include "xmlrpcclient.h"
+#include "%LOWERCASE_PREFIX%xmlrpcclient.h"
 
 %METHODBODIES%
 
@@ -76,7 +82,7 @@ EOT;
 
 for ($i=0;$i<$methodNodes->length;$i++) {
 	$outputMethodDeclaration = "\t\tint ";
-	$outputMethodDefinition = "int XmlRpcClient::";
+	$outputMethodDefinition = "int " . $prefix . "XmlRpcClient::";
 	$methodNode = $methodNodes->item($i);
 	$rawMethodName = $methodNode->attributes->getNamedItem("name")->value;
 	$methodName = str_replace(".", "_", $methodNode->attributes->getNamedItem("name")->value);
@@ -100,8 +106,8 @@ for ($i=0;$i<$methodNodes->length;$i++) {
 
 
 EOT;
-	$outputMethodDeclaration .= "const char *responseSlot, QObject *faultObj, const char* faultSlot);";
-	$outputMethodDefinition .= "const char *responseSlot, QObject *faultObj, const char* faultSlot)";
+	$outputMethodDeclaration .= "QObject *responseObj, const char *responseSlot, QObject *faultObj, const char* faultSlot);";
+	$outputMethodDefinition .= "QObject *responseObj, const char *responseSlot, QObject *faultObj, const char* faultSlot)";
 	$outputMethodDefinition .= str_replace("%ADDPARAMS%", $addParamsCode, $definitionTemplate);
 	$methods .= $outputMethodDeclaration;
 	$methodBodies .= $outputMethodDefinition;
@@ -111,13 +117,26 @@ $clientHeaderCode = str_replace("%METHODS%", $methods, $clientHeaderCodeTemplate
 $clientHeaderCode = str_replace("%URL%", $serviceUrl, $clientHeaderCode);
 $clientHeaderCode = str_replace("%NAMESPACE%", $serviceNS, $clientHeaderCode);
 $clientHeaderCode = str_replace("%SERVICE_NAME%", $serviceName, $clientHeaderCode);
+$clientHeaderCode = str_replace("%UPPERCASE_PREFIX%", strtoupper($prefix), $clientHeaderCode);
+$clientHeaderCode = str_replace("%PREFIX%", $prefix, $clientHeaderCode);
 
 $clientBodyCode = str_replace("%METHODBODIES%", $methodBodies, $clientBodyCodeTemplate);
+$clientBodyCode = str_replace("%LOWERCASE_PREFIX%", strtolower($prefix), $clientBodyCode);
 
-print $clientHeaderCode;
-print "\n";
-print $clientBodyCode;
-print "\n";
+$outputHeaderFilePath = $outputDir . "/" . strtolower($prefix) . "xmlrpcclient.h";
+$outputSourceFilePath = $outputDir . "/" . strtolower($prefix) . "xmlrpcclient.cpp";
+
+if (file_put_contents($outputHeaderFilePath, $clientHeaderCode)!==FALSE) {
+	print "Wrote class declaration to $outputHeaderFilePath\n";
+} else  {
+	print "Failed to write $outputHeaderFilePath\n";
+}
+
+if (file_put_contents($outputSourceFilePath, $clientBodyCode)!==FALSE) {
+	print "Wrote class definition to $outputSourceFilePath\n";
+} else {
+	print "Failed to write $outputSourceFilePath\n";
+}
 
 function xmlRpcTypeToMaiaType($xmlRpcType) {
 	switch ($xmlRpcType) {
@@ -144,7 +163,7 @@ function xmlRpcTypeToMaiaType($xmlRpcType) {
 }
 
 function printHelp() {
-	die("Usage:  php ./xml-rpc-client-generator.php --file <path to XRDL file>\n");
+	die("Usage:  php ./xml-rpc-client-generator.php --file <path to XRDL file> --dir <path to output dir> --prefix <prefix to prepend to class and constant names\n");
 }
 
 ?>
