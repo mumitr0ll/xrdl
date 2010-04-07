@@ -66,6 +66,7 @@ class %PREFIX%XmlRpcClient : public QObject {
 	private:
 		MaiaXmlRpcClient rpcClient;
 	public:
+		%PREFIX%XmlRpcClient(QObject *parent=0);
 %METHODS%
 };
 
@@ -75,6 +76,10 @@ EOT;
 
 $clientBodyCodeTemplate = <<<EOT
 #include "%LOWERCASE_PREFIX%xmlrpcclient.h"
+
+%PREFIX%XmlRpcClient::%PREFIX%XmlRpcClient(QObject *parent) : QObject(parent) {
+	rpcClient.setUrl(QUrl("%URL%"));
+}
 
 %METHODBODIES%
 
@@ -122,6 +127,8 @@ $clientHeaderCode = str_replace("%PREFIX%", $prefix, $clientHeaderCode);
 
 $clientBodyCode = str_replace("%METHODBODIES%", $methodBodies, $clientBodyCodeTemplate);
 $clientBodyCode = str_replace("%LOWERCASE_PREFIX%", strtolower($prefix), $clientBodyCode);
+$clientBodyCode = str_replace("%PREFIX%", $prefix, $clientBodyCode);
+$clientBodyCode = str_replace("%URL%", $serviceUrl, $clientBodyCode);
 
 $outputHeaderFilePath = $outputDir . "/" . strtolower($prefix) . "xmlrpcclient.h";
 $outputSourceFilePath = $outputDir . "/" . strtolower($prefix) . "xmlrpcclient.cpp";
